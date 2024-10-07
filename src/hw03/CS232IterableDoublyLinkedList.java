@@ -1,5 +1,7 @@
 package hw03;
 
+import java.util.NoSuchElementException;
+
 /**
  * Doubly linked list implementation of the CS232List interface.
  * 
@@ -7,7 +9,8 @@ package hw03;
  * @author Dickinson College
  * @version Feb 18, 2016
  */
-public class CS232DoublyLinkedList<E> implements CS232List<E> {
+public class CS232IterableDoublyLinkedList<E> implements CS232List<E>,
+CS232Iterable<E> {
 
 	private DLLNode head;
 	private DLLNode tail;
@@ -16,7 +19,7 @@ public class CS232DoublyLinkedList<E> implements CS232List<E> {
 	/**
 	 * Construct a new empty CS232DoublyLinkedList.
 	 */
-	public CS232DoublyLinkedList() {
+	public CS232IterableDoublyLinkedList() {
 		/*
 		 * This implementation uses dummy head and tail nodes to simplify the
 		 * implementation of insert/remove/add operations at the start or end of
@@ -76,7 +79,11 @@ public class CS232DoublyLinkedList<E> implements CS232List<E> {
 	 */
 	public E get(int index) throws IndexOutOfBoundsException {
 		DLLNode node = getNode(index);
-		return node.element;
+		if (node != null) {
+			return node.element;
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -92,10 +99,9 @@ public class CS232DoublyLinkedList<E> implements CS232List<E> {
 	 */
 	public void insert(int index, E element) throws IndexOutOfBoundsException {
 		/*
-		 * If the index is passed the end of the list, then tail will succeed
-		 * (appear immediately after) the new node. Otherwise, the node at index
-		 * succeeds the new node.  Need this because, getNode throws an exception
-		 * when index is out of range.
+		 * If the list is empty then tail will succeed (appear immediately
+		 * after) the new node. Otherwise, the node at index succeeds the new
+		 * node.
 		 */
 		DLLNode succ = tail;
 		if (index != size) {
@@ -114,42 +120,8 @@ public class CS232DoublyLinkedList<E> implements CS232List<E> {
 	 * {@inheritDoc}
 	 */
 	public E remove(int index) throws IndexOutOfBoundsException {
-		// Intentionally not implemented.
+		// Intentionally not implemented... see HW assignment!
 		return null;
-	}
-
-	/**
-	 * Clear all elements of the list up to and including index. The element, if
-	 * any, at index+1 becomes the first element in the list.
-	 * 
-	 * @param index
-	 *            the index up to which to clear the list.
-	 * @throws IndexOutOfBoundsException
-	 *             if index < 0 or index >= size()
-	 */
-	public void clearTo(int index) throws IndexOutOfBoundsException {
-		// Intentionally not implemented.
-	}
-
-	/**
-	 * Add all of the elements of the provided list into this list. The first
-	 * element of the provided list appears at the specified index in this list.
-	 * The element at index, if any, in this list appears immediately following
-	 * the last element of list. Note that it is possible to addAllAt the end of
-	 * the list by providing the list's size as the index.
-	 * 
-	 * @param index
-	 *            the index at which to add the elements.
-	 * @param list
-	 *            the list containing the elements to be added.
-	 * @throws IndexOutOfBoundsException
-	 *             if index < 0 or index > size()
-	 * @throws IllegalArgumentException
-	 *             if list is empty.
-	 */
-	public void addAllAt(int index, CS232DoublyLinkedList<E> list)
-			throws IndexOutOfBoundsException {
-		// Intentionally not implemented.
 	}
 
 	/*
@@ -169,6 +141,89 @@ public class CS232DoublyLinkedList<E> implements CS232List<E> {
 			this.element = element;
 			this.prev = prev;
 			this.next = next;
+		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public CS232Iterator<E> getIterator() {
+		return new DLLIterator();
+	}
+
+	/*
+	 * Iterator implementation for the doubly linked list.
+	 */
+	private class DLLIterator implements CS232Iterator<E> {
+
+		private DLLNode cursor;
+
+		//		A field to keep track of the node returned by the
+		//		most recent call to next or previous and use that to determine if the call to remove is
+		//		valid, and if so what element to return.
+		private DLLNode lastReturned = null;
+
+		public DLLIterator() {
+			cursor = head;
+		}
+
+		public boolean hasNext() {
+			return cursor.next != tail;
+		}
+
+		public E next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException("There is no next element.");
+			} else {
+				cursor = cursor.next;
+				lastReturned = cursor;
+				return cursor.element;
+			}
+		}
+
+		public boolean hasPrevious() {
+			return cursor != head && cursor.prev != head;
+		}
+
+		public E previous() {
+			if (!hasPrevious()) {
+				throw new NoSuchElementException("There is no previous element.");
+			} else {
+				cursor = cursor.prev;
+				lastReturned = cursor;
+				return cursor.element;
+			}
+
+		}
+
+		public void insert(E element) {
+			DLLNode node = new DLLNode(element, cursor, cursor.next);
+			cursor.next.prev = node;
+			cursor.next = node;
+			cursor = node;
+			size++;
+			lastReturned = null;
+		}
+
+		public E remove() {
+			if (lastReturned == null) {
+				throw new IllegalStateException("No elements to remove or remove has already been called,");
+			}
+
+			lastReturned.prev.next = lastReturned.next;
+			lastReturned.next.prev = lastReturned.prev;
+
+			if (cursor == lastReturned) {
+				cursor = lastReturned.next;
+			}
+
+			size--;
+
+			E element = lastReturned.element;
+
+			lastReturned = null;
+
+			return element;
 		}
 	}
 

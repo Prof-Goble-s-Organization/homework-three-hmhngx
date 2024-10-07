@@ -57,7 +57,9 @@ public class No7Tests {
 	public void testNextPreviousSequence() {
 		buildList();
 		it.next();
+//		System.out.println(it.next());
 		it.next();
+//		System.out.println(it.next());
 		assertEquals("Incorect value", "two", it.previous());
 		assertEquals("Incorect value", "two", it.next());
 		
